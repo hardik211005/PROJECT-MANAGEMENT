@@ -38,7 +38,9 @@ function WorkspaceDropdown() {
     }, []);
 
     useEffect(() => {
-        if(currentWorkspace && isLoaded)
+        if(currentWorkspace && isLoaded){
+            setActive({organization: currentWorkspace.id})
+        }
     },[currentWorkspace, isLoaded])
 
     return (
@@ -64,18 +66,18 @@ function WorkspaceDropdown() {
                         <p className="text-xs text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2 px-2">
                             Workspaces
                         </p>
-                        {dummyWorkspaces.map((ws) => (
-                            <div key={ws.id} onClick={() => onSelectWorkspace(ws.id)} className="flex items-center gap-3 p-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-zinc-800" >
-                                <img src={ws.image_url} alt={ws.name} className="w-6 h-6 rounded" />
+                        {userMemberships.data.map(({organization}) => (
+                            <div key={organization.id} onClick={() => onSelectWorkspace(organization.id)} className="flex items-center gap-3 p-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-zinc-800" >
+                                <img src={organization.imageUrl} alt={ws.name} className="w-6 h-6 rounded" />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
-                                        {ws.name}
+                                        {organization.name}
                                     </p>
                                     <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">
-                                        {ws.membersCount || 0} members
+                                        {organization.membersCount || 0} members
                                     </p>
                                 </div>
-                                {currentWorkspace?.id === ws.id && (
+                                {currentWorkspace?.id === organization.id && (
                                     <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                                 )}
                             </div>
@@ -84,7 +86,7 @@ function WorkspaceDropdown() {
 
                     <hr className="border-gray-200 dark:border-zinc-700" />
 
-                    <div className="p-2 cursor-pointer rounded group hover:bg-gray-100 dark:hover:bg-zinc-800" >
+                    <div onClick={() => {openCreateOrganization(); setIsOpen(false)} } className="p-2 cursor-pointer rounded group hover:bg-gray-100 dark:hover:bg-zinc-800" >
                         <p className="flex items-center text-xs gap-2 my-1 w-full text-blue-600 dark:text-blue-400 group-hover:text-blue-500 dark:group-hover:text-blue-300">
                             <Plus className="w-4 h-4" /> Create Workspace
                         </p>
