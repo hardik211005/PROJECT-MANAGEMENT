@@ -117,7 +117,7 @@ export const updateProject = async (req, res) => {
             }
         })
 
-        
+        res.json({project, message:"Project Updated Successfully"})
 
     }catch (error) {
         console.log(error);
@@ -129,34 +129,40 @@ export const updateProject = async (req, res) => {
 // Add member to project
 export const addMember = async (req, res) => {
     try {
-        const { userId } = await req.auth();
-        const { projectId } = req.params;
-        const { email, userId: newUserId } = req.body; // accept email or id
+        const {userId} = await req.auth();
+        const {projectId} = req.params;
+        const {email} = req.body;
 
-        if (!projectId) return res.status(400).json({ message: 'Project id is required in params' });
+        // Check if user is project lead
+        const project = await prisma.project.findUnique({
+            where: {id: projectId},
+            include: {members: {include: {user: true}}}
+        })
 
-        const project = await prisma.project.findUnique({ where: { id: projectId }, include: { workspace: { include: { members: { include: { user: true } } } }, members: true } });
-        if (!project) return res.status(404).json({ message: 'Project not found' });
-
-        const workspace = project.workspace;
-        if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
-
-        const isAdmin = workspace.members.some(m => m.userId === userId && m.role === 'ADMIN');
-        if (!isAdmin && project.team_lead !== userId) {
-            return res.status(403).json({ message: 'You do not have permission to add members to this project' });
+        if(!project){
+            return res.status(404).json({message: "Project not found"})
         }
 
-        // find member in workspace
-        const found = workspace.members.find(m => m.user.email === email || m.user.id === newUserId || m.user.id === email);
-        if (!found) return res.status(404).json({ message: 'User is not a member of the workspace' });
+        if(project.team_lead !== userId){
+            return res.status(404).json({message: "Only project lead can add the members"})
+        }
 
-        // create project member if not exists
-        await prisma.projectMember.createMany({ data: [{ projectId: project.id, userId: found.user.id }], skipDuplicates: true });
-
-        const projectWithMembers = await prisma.project.findUnique({ where: { id: project.id }, include: { members: { include: { user: true } } } });
-
-        res.json({ project: projectWithMembers, message: 'Member added to project' });
-
+        //check is user is already a member
+        const existingMember = project.members.find((member) => member.email === email)
+        if(existingMember){
+            return res.status(400).json({message: "User is already a member"})
+        }
+        const user = await prisma.user.findUnique({where: {email}});
+        if(!user){
+            return res.status(404).json({message: "User not found"})
+        }
+        const member = await prisma.projectMember.create({
+            data:{
+                userId: user.id,
+                projectId
+            }
+        })
+        res.json({member, message: "Member added successfully"})
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.code || error.message });
