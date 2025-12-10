@@ -1,3 +1,4 @@
+import prisma from "../configs/prisma";
 
 
 // Get all workspaces for user
