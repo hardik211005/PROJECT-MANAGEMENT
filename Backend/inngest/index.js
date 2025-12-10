@@ -1,5 +1,6 @@
 import { Inngest } from "inngest";
 import prisma from "../configs/prisma.js";
+import sendEmail from "../configs/nodemailer.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "project-management" });
@@ -127,6 +128,26 @@ const syncWorkspaceMemberCreation = inngest.createFunction(
                 workspaceId: data.organization_id,
                 role: String(data.role_name).toUpperCase(),
             }
+        })
+    }
+)
+//INNGEST functions to send email on task creation
+const sendTaskAssigneeEmail = inngest.createFunction(
+    {id: "send-task-assignee-email"},
+    {event: "app/task.assigned"},
+    async ({event, step}) => {
+        const {taskId, origin} = event.data;
+
+        const task = await prisma.task.findUnique({
+            where: {id: taskId},
+            include: {assignee: true, project: true}
+        })
+        await sendEmail({
+            to: task.assignee.email,
+            subject: `New Task Assigned: ${task.project.name} `,
+            body: `Hi ${task.assignee.name}` `${task.title}`
+            `${new Date(task.due_date).toLocaleDateString()}
+            <a> View Task </a>`
         })
     }
 )
