@@ -1,5 +1,5 @@
 import express from 'express';
-import { getTaskComments } from '../controllers/commentController';
+import { getTaskComments } from '../controllers/commentController.js';
 
 const commentRouter = express.Router()
 
