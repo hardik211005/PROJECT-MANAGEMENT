@@ -1,4 +1,5 @@
 import prisma from "../configs/prisma.js";
+import { inngest } from "../inngest/index.js";
 
 //create Task
 export const createTask = async (req,res) => {
@@ -35,6 +36,13 @@ export const createTask = async (req,res) => {
         const taskwWithAssignee = await prisma.task.findUnique({
             where: {id: task.id},
             include: {assignee: true}
+        })
+        await inngest.send({
+            name: "app/task.assigned",
+            data: {
+                taskId: task.id,
+                origin
+            }
         })
         res.json({task: taskwWithAssignee, message: "Task created successfully"})
     } catch (error) {
