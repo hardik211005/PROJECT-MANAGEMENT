@@ -30,10 +30,11 @@ export const createTask = async (req,res) => {
                 priority,
                 assigneeId,
                 status,
+                type,
                 due_date: new Date(due_date)
             }
         })
-        const taskwWithAssignee = await prisma.task.findUnique({
+        const taskWithAssignee = await prisma.task.findUnique({
             where: {id: task.id},
             include: {assignee: true}
         })
@@ -44,7 +45,7 @@ export const createTask = async (req,res) => {
                 origin
             }
         })
-        res.json({task: taskwWithAssignee, message: "Task created successfully"})
+        res.json({task: taskWithAssignee, message: "Task created successfully"})
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.code || error.message})
